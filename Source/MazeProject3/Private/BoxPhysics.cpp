@@ -15,6 +15,8 @@ ABoxPhysics::ABoxPhysics()
 void ABoxPhysics::BeginPlay()
 {
 	Super::BeginPlay();
+	OnActorBeginOverlap.AddDynamic(this, &ABoxPhysics::DestroySelf);
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Does begin"));
 	
 }
 
@@ -22,6 +24,9 @@ void ABoxPhysics::BeginPlay()
 void ABoxPhysics::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
+void ABoxPhysics::DestroySelf(class AActor* OverlappedActor, class AActor* OtherActor) {
+	this->Destroy();
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Is trying to destroy self"));
+}

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -19,6 +20,12 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	void myDamage(float d);
+
+	virtual void Die();
 
 public:	
 	// Called every frame
@@ -47,4 +54,11 @@ private:
 	void SpawnBox();
 	UFUNCTION()
 		void Respawn(class AActor* OverlappedActor, class AActor* OtherActor);
+
+public:
+	UPROPERTY(EditAnywhere)
+		float maxHealth;
+
+protected:
+	float _currentHealth;
 };

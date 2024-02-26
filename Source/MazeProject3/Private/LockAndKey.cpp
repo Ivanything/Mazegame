@@ -10,17 +10,18 @@ ALockAndKey::ALockAndKey()
 
 void ALockAndKey::BeginPlay()
 {
+	// Made method attached to overlapping trigger event, it's in begin play since it didn't work in the constructor
 	OnActorBeginOverlap.AddDynamic(this, &ALockAndKey::CheckActorType);
 }
 
 void ALockAndKey::CheckActorType(AActor* OverlappedActor, AActor* OtherActor)
 {
-	OpenTheDoor();
+	OpenTheDoor();// Will "open the door" when triggering anything (right now there is only one thing in the game)
 }
 
 void ALockAndKey::OpenTheDoor()
 {
-	SetActorLocation(FVector(0, 0, -500));// Use this instead of deleting it
+	SetActorLocation(FVector(0, 0, -500));// Will spawn the door somewhere underground so you can't see it
 	this->Destroy();// This code doesn't work?????
 
 

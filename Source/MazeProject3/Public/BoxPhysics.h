@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/TriggerBox.h"
 #include "GameFramework/Actor.h"
 #include "BoxPhysics.generated.h"
 
@@ -23,4 +24,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+		void DestroySelf(class AActor* OverlappedActor, class AActor* OtherActor);
 };

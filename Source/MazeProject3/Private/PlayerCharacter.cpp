@@ -14,9 +14,35 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	// Setting the respawn point to respawn you and making the trigger enter call my function
 	respawnPoint = GetActorLocation();
 	OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::Respawn);
+	_currentHealth = maxHealth;
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Some Message"));
+}
+
+float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	myDamage(DamageAmount);
+	return DamageAmount;
+}
+
+void APlayerCharacter::myDamage(float d)
+{
+	_currentHealth -= d;
+
+	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("The player took %f damage and has %f health left.", d, _currentHealth));
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("You Took Damage!"));
+
+	if (_currentHealth <= 0)
+		Die();
+}
+
+void APlayerCharacter::Die()
+{
+	SetActorLocation(respawnPoint);
+	_currentHealth = maxHealth;
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("You Are Dead!"));
 }
 
 // Called every frame
@@ -29,6 +55,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 // Called to bind functionality to input
 void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+	// Binding all the actions to the correct functions
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	PlayerInputComponent->BindAxis("Vertical", this, &APlayerCharacter::Vertical);
 	PlayerInputComponent->BindAxis("Horizontal", this, &APlayerCharacter::Horizontal);
@@ -58,12 +85,18 @@ void APlayerCharacter::MouseX(float value) {
 void APlayerCharacter::SpawnBox() {
 	GetWorld()->SpawnActor<UClass>(ClassForSpawning, GetActorLocation() + GetActorForwardVector() * 100, GetActorRotation());
 	
-	//This crashes my project for some reason?????
+	//This crashes my project for some reason????? Ignore this
 }
 
+// Will spawn you back to the beginning when you trigger something that has the "Die" tag
 void APlayerCharacter::Respawn(class AActor* OverlappedActor, class AActor* OtherActor) {
 	if (OtherActor->ActorHasTag("Die")) {
-		SetActorLocation(respawnPoint);
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("You Are Dead!"));
+		FVector launch = OtherActor->GetActorLocation() - OverlappedActor->GetActorLocation();
+		launch.Normalize();
+		launch += FVector(0, 0, 0.5f);
+		launch.Normalize();
+		GetCharacterMovement()->AddImpulse(launch * -1000, true);
+		myDamage(5);
+		//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Don't Hit That!"));
 	}
 }
