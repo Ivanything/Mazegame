@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -27,6 +28,8 @@ protected:
 
 	virtual void Die();
 
+	bool damageOnce = false;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -43,21 +46,32 @@ public:
 		TSubclassOf<AActor> ClassForSpawning;
 	UPROPERTY(EditAnywhere)
 		USkeletalMeshComponent* skMesh;
+	UPROPERTY(EditAnywhere)
+		UAnimSequence* deathAnimation;
+	UPROPERTY(EditAnywhere)
+		USoundBase* damageSound;
+	UFUNCTION(BlueprintCallable)
+		void Respawn();
+
+	void Heal(float h);
+	void Sprint(float s);
 
 private:
 	FVector respawnPoint;
+	bool isRespawning;
+	float sprinting;
+	UFUNCTION()
+		void DamageTrigger(class AActor* OverlappedActor, class AActor* OtherActor);
 
 private:
 	void Vertical(float value);
 	void Horizontal(float value);
 	void MouseX(float value);
 	void SpawnBox();
-	UFUNCTION()
-		void Respawn(class AActor* OverlappedActor, class AActor* OtherActor);
 
 public:
 	UPROPERTY(EditAnywhere)
-		float maxHealth;
+		float maxHealth2;
 
 protected:
 	float _currentHealth;
