@@ -7,6 +7,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/UserWidget.h"
 #include "PlayerCharacter.generated.h"
 
 UCLASS()
@@ -73,6 +74,37 @@ public:
 	UPROPERTY(EditAnywhere)
 		float maxHealth2;
 
+	UFUNCTION(BlueprintCallable)
+		float getHealthRatio();
+
 protected:
 	float _currentHealth;
+	
+	APlayerController* _controller;
+
+	//*
+public:
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<UUserWidget> _gameOverScreen;
+	UPROPERTY()
+		UUserWidget* _gameOverInstance;
+
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<UUserWidget> _winningScreen;
+	UPROPERTY()
+		UUserWidget* _winningInstance;//*/
+
+	UPROPERTY(EditAnywhere)
+		TSubclassOf<UUserWidget> _pauseScreen;
+	UPROPERTY()
+		UUserWidget* _pauseMenuInstance;//*/
+
+protected:
+	virtual void OpenGameOverScreen();
+	virtual void PauseGameplay(bool isPaused);
+	virtual void showMouseCursor();
+	virtual void OpenPauseMenu();
+
+public:
+	virtual void OpenVictoryScreen();
 };

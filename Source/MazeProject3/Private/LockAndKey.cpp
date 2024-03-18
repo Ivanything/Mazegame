@@ -17,6 +17,7 @@ void ALockAndKey::BeginPlay()
 void ALockAndKey::CheckActorType(AActor* OverlappedActor, AActor* OtherActor)
 {
 	if (!OtherActor->IsA(APlayerCharacter::StaticClass())) return;
+	UGameplayStatics::PlaySound2D(OtherActor, sound, 1, 1, 0);
 	OpenTheDoor();// Will "open the door" when triggering anything (right now there is only one thing in the game)
 }
 

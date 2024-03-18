@@ -14,61 +14,30 @@ APlayerCharacter::APlayerCharacter()
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	_controller = Cast<APlayerController>(GetController());
+
+	_gameOverInstance = CreateWidget(GetWorld(), _gameOverScreen);
+	_winningInstance = CreateWidget(GetWorld(), _winningScreen);
+	_pauseMenuInstance = CreateWidget(GetWorld(), _pauseScreen);
+
 	// Setting the respawn point to respawn you and making the trigger enter call my function
 	respawnPoint = GetActorLocation();
 	OnActorBeginOverlap.AddDynamic(this, &APlayerCharacter::DamageTrigger);
 	if (maxHealth2 == 0)
 		maxHealth2 = 20;
 	_currentHealth = maxHealth2;
-	UE_LOG(LogTemp, Log, TEXT("The player's health starts off at %f."), maxHealth2);
+	//UE_LOG(LogTemp, Log, TEXT("The player's health starts off at %f."), maxHealth2);
 
-	UE_LOG(LogTemp, Log, TEXT("Health is pointing to %p and Sprinting is pointing to %p"), &maxHealth2, &sprinting);
-}
-
-float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	if (damageOnce) return 0;
-	myDamage(DamageAmount);
-	return DamageAmount;
-}
-
-void APlayerCharacter::myDamage(float d)
-{
-	damageOnce = true;
-	_currentHealth -= d;
-	UGameplayStatics::PlaySound2D(this, damageSound, 0.5f, 1, 0);
-	UE_LOG(LogTemp, Log, TEXT("You have %f health left."), _currentHealth);
-
-	//UE_LOG(LogTemp, Log, TEXT("The player took %f damage and has %f health left and started with %f health."), d, _currentHealth, maxHealth2);
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("You Took Damage!"));
-
-	if (_currentHealth <= 0)
-		Die();
-}
-
-void APlayerCharacter::Die()
-{
-	GetMesh()->PlayAnimation(deathAnimation, false);
-	isRespawning = true;
-	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("You Are Dead!"));
-}
-
-void APlayerCharacter::Respawn()
-{
-	_currentHealth = maxHealth2;
-	UE_LOG(LogTemp, Log, TEXT("I now have %f health."), _currentHealth);
-	isRespawning = false;
-	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-	SetActorLocation(respawnPoint);
-	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("You Respawned!"));
+	//UE_LOG(LogTemp, Log, TEXT("Health is pointing to %p and Sprinting is pointing to %p"), &maxHealth2, &sprinting);
 }
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	//UE_LOG(LogTemp, Log, TEXT("Sprinting is at %f."), sprinting);
 	damageOnce = false;
+	//UE_LOG(LogTemp, Log, TEXT("Sprinting is at %f."), sprinting);
 	if (sprinting > 0)
 		sprinting -= DeltaTime;
 }
@@ -82,6 +51,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("Horizontal", this, &APlayerCharacter::Horizontal);
 	PlayerInputComponent->BindAxis("MouseX", this, &APlayerCharacter::MouseX);
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &APlayerCharacter::Jump);
+	PlayerInputComponent->BindAction("Pause", IE_Pressed, this, &APlayerCharacter::OpenPauseMenu);
 	//PlayerInputComponent->BindAction("Spawn", IE_Pressed, this, &APlayerCharacter::SpawnBox);
 	//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("DoesSetInputs"));
 }
@@ -126,6 +96,46 @@ void APlayerCharacter::SpawnBox() {
 	//This crashes my project for some reason????? Ignore this
 }
 
+float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	if (damageOnce) return 0;
+	damageOnce = true;
+	myDamage(DamageAmount);
+	return DamageAmount;
+}
+
+void APlayerCharacter::myDamage(float d)
+{
+	_currentHealth -= d;
+	UGameplayStatics::PlaySound2D(this, damageSound, 0.5f, 1, 0);
+	UE_LOG(LogTemp, Log, TEXT("You have %f health left."), _currentHealth);
+
+	//UE_LOG(LogTemp, Log, TEXT("The player took %f damage and has %f health left and started with %f health."), d, _currentHealth, maxHealth2);
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, TEXT("You Took Damage!"));
+
+	if (_currentHealth <= 0)
+		Die();
+}
+
+void APlayerCharacter::Die()
+{
+	GetMesh()->PlayAnimation(deathAnimation, false);
+	isRespawning = true;
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, TEXT("You Are Dead!"));
+}
+
+void APlayerCharacter::Respawn()
+{
+	OpenGameOverScreen();
+	return;
+	_currentHealth = maxHealth2;
+	UE_LOG(LogTemp, Log, TEXT("I now have %f health."), _currentHealth);
+	isRespawning = false;
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	SetActorLocation(respawnPoint);
+	GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("You Respawned!"));
+}
+
 // Will spawn you back to the beginning when you trigger something that has the "Die" tag
 void APlayerCharacter::DamageTrigger(class AActor* OverlappedActor, class AActor* OtherActor) {
 	if (OtherActor->ActorHasTag("Die")) {
@@ -133,7 +143,7 @@ void APlayerCharacter::DamageTrigger(class AActor* OverlappedActor, class AActor
 		launch.Normalize();
 		launch += FVector(0, 0, 0.5f);
 		launch.Normalize();
-		GetCharacterMovement()->AddImpulse(launch * -1000, true);
+		GetCharacterMovement()->AddImpulse(launch * 800, true);
 		myDamage(5);
 	}
 }
@@ -146,7 +156,41 @@ void APlayerCharacter::Heal(float h) {
 	UE_LOG(LogTemp, Log, TEXT("Your health is now %f."), _currentHealth);
 }
 
+float APlayerCharacter::getHealthRatio() {
+	return _currentHealth / maxHealth2;
+}
+
 void APlayerCharacter::Sprint(float s) {
 	//sprinting = s;
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("You have SPEED!!! \n(3 seconds)"));
+}
+
+
+
+void APlayerCharacter::OpenGameOverScreen() {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Open the screen"));
+	_gameOverInstance->AddToViewport();
+	PauseGameplay(true);
+	showMouseCursor();
+}
+
+void APlayerCharacter::OpenVictoryScreen() {
+	//return;
+	_winningInstance->AddToViewport();
+	PauseGameplay(true);
+	showMouseCursor();
+}
+
+void APlayerCharacter::OpenPauseMenu() {
+	PauseGameplay(true);
+	_pauseMenuInstance->AddToViewport();
+	showMouseCursor();
+}
+
+void APlayerCharacter::PauseGameplay(bool isPaused) {
+	_controller->SetPause(isPaused);
+}
+
+void APlayerCharacter::showMouseCursor() {
+	_controller->bShowMouseCursor = true;
 }
